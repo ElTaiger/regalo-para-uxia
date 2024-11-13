@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flor Romántica para Uxía</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #000000;
+      overflow: hidden;
+    }
+    canvas {
+      background: radial-gradient(circle at 50% 20%, #1b1f3a, #0d0e1f); /* Smooth, abstract space gradient */
+      border: 1px solid #333;
+      position: relative;
+      z-index: 1;
+    }
+    #text-overlay {
+      position: absolute;
+      top: 10%;
+      width: 100%;
+      text-align: center;
+      font-size: 1.8em;
+      color: #FFB6C1;
+      font-family: 'Courier New', Courier, monospace;
+      opacity: 0;
+      animation: fadeInText 5s ease-in-out forwards, floatingText 8s ease-in-out infinite;
+      z-index: 2;
+    }
+    @keyframes fadeInText {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes floatingText {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+  </style>
+</head>
+<body>
+  <div id="text-overlay">"Como esta flor que crece y se balancea<br> así crece mi amor por ti, Uxía."</div>
+  <canvas id="florCanvas" width="500" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById("florCanvas");
+    const ctx = canvas.getContext("2d");
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height - 40;  // Adjusted for ground overlap
+    let step = 0;
+    const maxSteps = 250;
+    const windFrequency = 140;  // Further reduced frequency for slower swing
+    const windAmplitude = 8;    // Increased amplitude for noticeable balance
+
+    function drawAbstractSpace() {
+      for (let i = 0; i < 8; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height * 0.5;
+        const radius = Math.random() * 50 + 20;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.02})`;  // Lower opacity for a softer effect
+        ctx.fill();
+      }
+    }
+
+    function drawGround() {
+      ctx.fillStyle = "#3B5323";  // Dark green for ground
+      ctx.fillRect(0, canvas.height - 40, canvas.width, 40);  // Raised to overlap stem
+    }
+
+    function drawStem(progress, windOffset) {
+      ctx.beginPath();
+      ctx.moveTo(centerX + windOffset, centerY);
+      ctx.bezierCurveTo(centerX + windOffset + 15, centerY - progress / 2, centerX + windOffset - 15, centerY - progress, centerX + windOffset, centerY - progress);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = "#2E8B57";  // Dark green
+      ctx.stroke();
+    }
+
+    function drawLeaf(x, y, size, angle, windOffset) {
+      ctx.save();
+      ctx.translate(x + windOffset, y);
+      ctx.rotate(angle + windOffset / 80);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(-size, size / 1.5, 0, size);
+      ctx.quadraticCurveTo(size, size / 1.5, 0, 0);
+      ctx.fillStyle = "#32CD32";
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawPetal(x, y, angle, size, color, windOffset, flowerTilt) {
+      ctx.save();
+      ctx.translate(x + windOffset + flowerTilt, y);
+      ctx.rotate(angle + flowerTilt / 70);  // Increased effect for a smoother, larger swing
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(-size / 2, -size * 1.5, size / 2, -size * 1.5, 0, 0);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawCenter(x, y, radius, windOffset, flowerTilt) {
+      ctx.beginPath();
+      ctx.arc(x + windOffset + flowerTilt, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = "gold";
+      ctx.fill();
+
+      for (let i = 0; i < 10; i++) {
+        const angle = Math.PI * 2 * i / 10;
+        const dotX = x + Math.cos(angle) * (radius - 5) + windOffset + flowerTilt;
+        const dotY = y + Math.sin(angle) * (radius - 5);
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "orange";
+        ctx.fill();
+      }
+    }
+
+    function drawFlower() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw background elements
+      drawAbstractSpace();
+      drawGround();
+
+      // Calculate wind offset for a gentle swinging effect in a loop
+      const windOffset = Math.sin(step / windFrequency) * windAmplitude;
+      const flowerTilt = Math.sin(step / (windFrequency * 1.2)) * windAmplitude;  // Slower but noticeable tilt
+
+      // Draw the stem with a wind effect
+      const stemHeight = Math.min(step, maxSteps);
+      drawStem(stemHeight, windOffset);
+
+      // Draw leaves progressively with wind effect
+      if (step > 80) drawLeaf(centerX - 20, centerY - 90, 25, -0.6, windOffset);
+      if (step > 120) drawLeaf(centerX + 20, centerY - 110, 30, 0.6, windOffset);
+
+      // Draw petals that appear to grow out of the stem with wind effect and noticeable tilt
+      const petalSize = 40;
+      const petalCount = 8;
+      const colors = ["rgba(255, 105, 180, 0.8)", "rgba(255, 182, 193, 0.6)", "rgba(255, 160, 122, 0.7)"];
+      if (step >= maxSteps) {
+        for (let layer = 0; layer < colors.length; layer++) {
+          for (let i = 0; i < petalCount; i++) {
+            const angle = (Math.PI * 2 / petalCount) * i + Math.sin(step / 40) * 0.1 + windOffset / 100;
+            const xPos = centerX + Math.cos(angle) * (30 + layer * 8);
+            const yPos = centerY - maxSteps + Math.sin(angle) * (30 + layer * 8);
+            if (step > maxSteps + layer * 20) {
+              drawPetal(xPos, yPos, angle, petalSize - layer * 5, colors[layer], windOffset, flowerTilt);
+            }
+          }
+        }
+
+        // Draw the center of the flower with decorative dots and wind effect
+        drawCenter(centerX, centerY - maxSteps, 12, windOffset, flowerTilt);
+      }
+
+      // Increment step for smooth animation and continuous wind effect
+      step += 0.7;  // Slower for a more realistic, smoother growth and balance
+      requestAnimationFrame(drawFlower);
+    }
+
+    drawFlower();
+  </script>
+</body>
+</html>
